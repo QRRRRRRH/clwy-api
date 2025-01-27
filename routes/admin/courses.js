@@ -4,11 +4,9 @@ const { Course, Category, User,Chapter } = require('../../models');
 
 const { Op } = require('sequelize');
 // 当前是第几页，如果不传，那就是第一页
-const {
-  NotFoundError,
-  success,
-  failure,
-} = require('../../utils/response');
+const { NotFoundError } = require('../../utils/errors');
+const { success, failure } = require('../../utils/responses');
+
 
 /**
  * 查询课程列表
