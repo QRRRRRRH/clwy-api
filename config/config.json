@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "Atguigu.123",
+    "database": "clwy_api_development",
+    "host": "23.95.96.117",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": "Atguigu.123",
+    "database": "clwy_api_development",
+    "host": "23.95.96.117",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "Atguigu.123",
+    "database": "clwy_api_development",
+    "host": "23.95.96.117",
+    "dialect": "mysql"
+  }
+}
