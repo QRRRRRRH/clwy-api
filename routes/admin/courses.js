@@ -120,7 +120,7 @@ router.post('/', async function (req, res) {
     try {
       // 白名单过滤
       const body = filterBody(req);
-  
+      body.userId = req.user.id;
       // 使用过滤好的 body 数据，创建课程
       const course = await Course.create(body);
   
@@ -244,7 +244,6 @@ async function getCourse(req) {
 function filterBody(req) {
   return {
     categoryId: req.body.categoryId,
-    userId: req.body.userId,
     name: req.body.name,
     image: req.body.image,
     recommended: req.body.recommended,

@@ -12,6 +12,8 @@ const { success, failure } = require('../../utils/responses');
  */
 router.get('/', async function (req, res) {
     try {
+     
+
       // 获取查询参数
       const query = req.query;
   
