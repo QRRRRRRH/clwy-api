@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Category,Course} = require('../../models');
+const { Chapter,Course } = require('../../models');
 const { Op } = require('sequelize');
 // 当前是第几页，如果不传，那就是第一页
 const {
@@ -10,8 +10,8 @@ const {
 } = require('../../utils/response');
 
 /**
- * 查询分类列表
- * GET /admin/categories
+ * 查询章节列表
+ * GET /admin/chapters
  */
 router.get('/', async function (req, res) {
     try {
@@ -28,33 +28,42 @@ router.get('/', async function (req, res) {
       // 计算offset
       const offset = (currentPage - 1) * pageSize;
   
-      // 定义查询条件
+      if (!query.courseId) {
+        throw new Error('获取章节列表失败，课程ID不能为空。');
+      }
+      
       const condition = {
-        order: [['id', 'DESC']],
-  
-        // 在查询条件中添加 limit 和 offset
+        ...getCondition(),
+        order: [['rank', 'ASC'], ['id', 'ASC']],
+
         limit: pageSize,
         offset: offset
       };
-  
-      // 如果有 name查询参数，就添加到 where 条件中
-      if (query.name) {
+      
+      condition.where = {
+        courseId: {
+          [Op.eq]: query.courseId
+        }
+      };
+      
+      if (query.title) {
         condition.where = {
-          name: {
-            [Op.like]: `%${query.name}%`
+          title: {
+            [Op.like]: `%${ query.title }%`
           }
         };
       }
+      
   
       // 查询数据
       // 将 findAll 方法改为 findAndCountAll 方法
       // findAndCountAll 方法会返回一个对象，对象中有两个属性，一个是 count，一个是 rows，
       // count 是查询到的数据的总数，rows 中才是查询到的数据
-      const { count, rows } = await Category.findAndCountAll(condition);
+      const { count, rows } = await Chapter.findAndCountAll(condition);
   
       // 返回查询结果
-      success(res, '查询分类列表成功。', {
-        categories: rows,
+      success(res, '查询章节列表成功。', {
+        chapters: rows,
         pagination: {
           total: count,
           currentPage,
@@ -70,9 +79,9 @@ router.get('/', async function (req, res) {
  
   router.get('/:id', async function (req, res) {
    try { 
-    const category= await getCategory(req);
+    const chapter = await getChapter(req);
   
-    success(res, '查询分类成功。', { category});
+    success(res, '查询章节成功。', { chapter });
 
 }
     catch(error){
@@ -81,18 +90,18 @@ router.get('/', async function (req, res) {
   });
 
 /**
- * 创建分类
- * POST /admin/categories
+ * 创建章节
+ * POST /admin/chapters
  */
 router.post('/', async function (req, res) {
     try {
       // 白名单过滤
       const body = filterBody(req);
   
-      // 使用过滤好的 body 数据，创建分类
-      const category= await Category.create(body);
+      // 使用过滤好的 body 数据，创建章节
+      const chapter = await Chapter.create(body);
   
-      success(res, '创建分类成功。', { category}, 201);
+      success(res, '创建章节成功。', { chapter }, 201);
     } catch (error) {
       failure(res, error);
       
@@ -101,28 +110,43 @@ router.post('/', async function (req, res) {
   
   router.delete('/:id', async function (req, res) {
     try {
-      const category = await getCategory(req);
-  
-      const count = await Course.count({ where: { categoryId: req.params.id } });
-      if (count > 0) {
-        throw new Error('当前分类有课程，无法删除。');
-      }
-  
-      await category.destroy();
-      success(res, '删除分类成功。');
+      // 获取章节 ID
+      const chapter = await getChapter(req);
+     
+        // 删除章节
+        await chapter.destroy();
+        success(res, '删除章节成功。');
+     
     } catch (error) {
       failure(res, error);
     }
   });
+  /**
+ * 公共方法：关联课程数据
+ * @returns {{include: [{as: string, model, attributes: string[]}], attributes: {exclude: string[]}}}
+ */
+function getCondition() {
+  return {
+    attributes: { exclude: ['CourseId'] },
+    include: [
+      {
+        model: Course,
+        as: 'course',
+        attributes: ['id', 'name']
+      }
+    ]
+  }
+}
+
   router.put('/:id', async function (req, res) {
     try {
-      const category= await getCategory(req);
+      const chapter = await getChapter(req);
     const body = filterBody(req);
   
 
-        await category.update(body);
+        await chapter.update(body);
   
-        success(res, '创建分类成功。', { category}, 201);
+        success(res, '创建章节成功。', { chapter }, 201);
      
     } catch (error) {
       failure(res, error);
@@ -139,24 +163,24 @@ router.post('/', async function (req, res) {
         order: [['id', 'DESC']]
       };
   
-      // 如果有 name查询参数，就添加到 where 条件中
-      if(query.name) {
+      // 如果有 title 查询参数，就添加到 where 条件中
+      if(query.title) {
         condition.where = {
-          name: {
-            [Op.like]: `%${query.name}%`
+          title: {
+            [Op.like]: `%${query.title}%`
           }
         };
       }
   
       // 查询数据
-      const categories= await Category.findAll(condition);
+      const chapters = await Chapter.findAll(condition);
   
       // 返回查询结果
       res.json({
         status: true,
-        message: '查询分类列表成功。',
+        message: '查询章节列表成功。',
         data: {
-          categories
+          chapters
         }
       });
     } catch (error) {
@@ -164,42 +188,38 @@ router.post('/', async function (req, res) {
     }
   });
   /**
- * 公共方法：查询当前分类
+ * 公共方法：查询当前章节
  */
-/**
- * 公共方法：查询当前分类
- */
-async function getCategory(req) {
-  const { id } = req.params;
-  const condition = {
-    include: [
-      {
-        model: Course,
-        as: 'courses',
-      },
-    ]
-  }
+async function getChapter(req) {
+  // 获取章节 ID
+ const { id } = req.params;
+ const condition = getCondition();
+  // 查询当前章节
+ const chapter = await Chapter.findByPk(id);
 
-  const category = await Category.findByPk(id, condition);
-  if (!category) {
-    throw new NotFoundError(`ID: ${ id }的分类未找到。`)
-  }
+ // 如果没有找到，就抛出异常
+ if (!chapter) {
+   throw new NotFoundError(`ID: ${ id }的章节未找到。`)
+ }
 
-  return category;
+ return chapter;
 }
 
 /**
  * 公共方法：白名单过滤
  * @param req
- * @returns {{name, rank: *}}
+ * @returns {{rank: (number|*), video: (string|boolean|MediaTrackConstraints|VideoConfiguration|*), title, courseId: (number|*), content}}
  */
-
 function filterBody(req) {
-    return {
-      name: req.body.name,
-      rank: req.body.rank
-    };
-  }
+  return {
+    courseId: req.body.courseId,
+    title: req.body.title,
+    content: req.body.content,
+    video: req.body.video,
+    rank: req.body.rank
+  };
+}
+
   
   
 module.exports = router;
