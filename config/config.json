@@ -11,13 +11,15 @@
     "password": "Atguigu.123",
     "database": "clwy_api_development",
     "host": "23.95.96.117",
-    "dialect": "mysql"
+    "dialect": "mysql",
+     "timezone": "+08:00"
   },
   "production": {
     "username": "root",
     "password": "Atguigu.123",
     "database": "clwy_api_development",
     "host": "23.95.96.117",
-    "dialect": "mysql"
+    "dialect": "mysql",
+    "timezone": "+08:00"
   }
 }

@@ -1,3 +1,5 @@
+const cors = require('cors')
+
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -21,6 +23,8 @@ const app = express();
 const settingsRouter = require('./routes/settings');
 const searchRouter = require('./routes/search');
 const authRouter = require('./routes/auth');
+const userAuth = require('./middlewares/user-auth');
+const likesRouter = require('./routes/likes');
 
 
 
@@ -30,12 +34,24 @@ const authRouter = require('./routes/auth');
 
 
 
-
-
-
+// CORS 跨域配置
+const corsOptions = {
+    origin: [
+      'https://clwy.cn',
+      'http://localhost:3000'
+    ],
+  }
+  app.use(cors(corsOptions));
+  
 
 // 后台路由文件
 const adminArticlesRouter = require('./routes/admin/articles');
+// CORS 跨域配置
+app.use(cors());
+
+// 前台路由配置
+app.use('/', indexRouter);
+
 app.use('/admin/settings', adminSettingsRouter);
 app.use(logger('dev'));
 app.use(express.json());
@@ -51,8 +67,8 @@ app.use('/chapters', chaptersRouter);
 app.use('/articles', articlesRouter);
 app.use('/settings', settingsRouter);
 app.use('/auth', authRouter);
-
-
+app.use('/users', userAuth, usersRouter);
+app.use('/likes', userAuth, likesRouter);
 
 
 
